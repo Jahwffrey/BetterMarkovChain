@@ -2,11 +2,12 @@
 //is an array of words that will be used as the next set of indexes to use:
 //0->0->0->['Hello','Whats']
 //0->0->'Hello'->['my','son!'] and so forth
-var wordDepth = 4;
+var wordDepth = 3;
 var wordMap = {};
 var randNum = Math.random();
 var notAWord = randNum.toString();
 var wordMem = [];
+var startWords = [notAWord];
 for(var i = 0;i < wordDepth;i++){
 	wordMem[i] = notAWord;
 }
@@ -29,13 +30,18 @@ var cycleArray = function(arr,item){
 	arr[arr.length-1] = item;
 }
 
-var addToWordMap = function(str){
+//Split function in the from array function(str){};
+//Start word check function in the form boolean function(word,sentence){};
+var addToWordMap = function(str,splitFunction,startWordCheckFunction){
 	for(var i = 0;i < wordDepth;i++){
 		wordMem[i] = notAWord;
 	}
-	var testArr = str.split(" ");
+	var testArr = splitFunction(str);
 	for(var i = 0;i < testArr.length;i++){
 		//Walk down the wordMap, created new routes
+		if(startWordCheckFunction(testArr[i],str)){
+			startWords.push(testArr[i]);
+		}
 		if(wordMap[wordMem[0]] == undefined){
 			wordMap[wordMem[0]] = {};
 		}
@@ -55,11 +61,29 @@ var addToWordMap = function(str){
 	}
 }
 
-var generateASentence = function(endConditionsFunction,wordList){
+//End condition function in the form boolean function(word){};
+var generateASentence = function(endConditionsFunction,wordList,wordSeperator){
 	var sentence = "";
-	for(var i = 0;i < wordDepth;i++){
-		wordMem[i] = wordList[i];
-		if(wordList[i]!=notAWord) sentence = sentence + wordList[i] + " ";
+	if(wordList!=-1){
+		for(var i = 0;i < wordDepth;i++){
+			wordMem[i] = wordList[i];
+			if(wordList[i]!=notAWord) sentence = sentence + wordList[i] + wordSeperator;
+		} 
+	} else {
+		for(var i = 0;i < wordDepth;i++){
+			wordMem[i]=notAWord;
+		}
+		var startWord = startWords[Math.floor(Math.random()*startWords.length)];
+		cycleArray(wordMem,startWord);
+		sentence = sentence + startWord + wordSeperator;
+		var thisWord = wordMap[startWord];
+		for(var i = 1;i < wordDepth;i++){
+			var words = Object.keys(thisWord);
+			startWord = words[Math.floor(Math.random()*words.length)];
+			sentence = sentence + startWord + wordSeperator;
+			thisWord = thisWord[startWord];
+			cycleArray(wordMem,startWord);
+		}
 	}
 	var lastStr = notAWord;
 	var lookThing;
@@ -72,16 +96,19 @@ var generateASentence = function(endConditionsFunction,wordList){
 		}
 		lastStr = lookThing[Math.floor(Math.random()*lookThing.length)];
 		cycleArray(wordMem,lastStr);
-		sentence = sentence + lastStr + " ";
+		sentence = sentence + lastStr + wordSeperator;
 	}
 	console.log(sentence);
 }
+
+
+
+
 $(document).ready(function(){
-	var testStr = $("#hobbit").text();
-	var sentenceArr = testStr.split(".");
-	for(var i = 0;i < sentenceArr.length;i++){
-		addToWordMap(sentenceArr[i] + ".");
-	}
+	var testStr = $("#wordDiv").text();
+	addToWordMap(testStr,function(str){return str.split(" ");},function(str,sentence){
+		return str.match(/[A-Z].*/) == str;
+	});
 	generateASentence(function(str){
 		var strArr = str.split("");
 		var lastSymbol = strArr[strArr.length - 1];
@@ -90,5 +117,5 @@ $(document).ready(function(){
 		} else {
 			return true;
 		}
-	},[notAWord,notAWord,notAWord]);
+	},-1," ");
 });
