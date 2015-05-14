@@ -2,7 +2,7 @@
 //is an array of words that will be used as the next set of indexes to use:
 //0->0->0->['Hello','Whats']
 //0->0->'Hello'->['my','son!'] and so forth
-var wordDepth = 3;
+var wordDepth = 4;
 var wordMap = {};
 var randNum = Math.random();
 var notAWord = randNum.toString();
@@ -55,17 +55,20 @@ var addToWordMap = function(str){
 	}
 }
 
-var generateASentence = function(endConditionsFunction){
+var generateASentence = function(endConditionsFunction,wordList){
 	var sentence = "";
 	for(var i = 0;i < wordDepth;i++){
-		wordMem[i] = notAWord;
+		wordMem[i] = wordList[i];
+		if(wordList[i]!=notAWord) sentence = sentence + wordList[i] + " ";
 	}
 	var lastStr = notAWord;
 	var lookThing;
 	while(endConditionsFunction(lastStr)){
 		lookThing = wordMap[wordMem[0]];
 		for(var i = 1;i < wordDepth;i++){
-			lookThing = lookThing[wordMem[i]];
+			if(wordMem[i]!=undefined){
+				lookThing = lookThing[wordMem[i]];
+			}
 		}
 		lastStr = lookThing[Math.floor(Math.random()*lookThing.length)];
 		cycleArray(wordMem,lastStr);
@@ -73,14 +76,19 @@ var generateASentence = function(endConditionsFunction){
 	}
 	console.log(sentence);
 }
-
-addToWordMap(testStr);
-generateASentence(function(str){
-	var strArr = str.split("");
-	var lastSymbol = strArr[strArr.length - 1];
-	if(lastSymbol == "." || lastSymbol == "?" || lastSymbol == "!"){
-		return false;
-	} else {
-		return true;
+$(document).ready(function(){
+	var testStr = $("#hobbit").text();
+	var sentenceArr = testStr.split(".");
+	for(var i = 0;i < sentenceArr.length;i++){
+		addToWordMap(sentenceArr[i] + ".");
 	}
+	generateASentence(function(str){
+		var strArr = str.split("");
+		var lastSymbol = strArr[strArr.length - 1];
+		if(lastSymbol == "." || lastSymbol == "?" || lastSymbol == "!" || lastSymbol == '.\n' || lastSymbol == '?\n' || lastSymbol == '!\n'){
+			return false;
+		} else {
+			return true;
+		}
+	},[notAWord,notAWord,notAWord]);
 });
